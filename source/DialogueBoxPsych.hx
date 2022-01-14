@@ -524,16 +524,45 @@ class DialogueBoxPsych extends FlxSpriteGroup
 		}
 	}
 
-	public static function parseDialogue(path:String):DialogueFile {
+	
+public static function parseDialogue(path:String):DialogueFile {
+		var content:String = null;
 		#if MODS_ALLOWED
-		if(FileSystem.exists(path))
-		{
-			return cast Json.parse(File.getContent(path));
+		if (FileSystem.exists(path)) {
+			content = File.getContent(path);
 		}
+		#else
+		content = Assets.getText(path);
 		#end
-		return cast Json.parse(Assets.getText(path));
+		if (path.toLowerCase().endsWith('.txt')) { //Compatibility with VS Selever dialogues
+			return parseTxtDialog(content);
+		} else { //Load the usual Psych json scripts
+			return cast Json.parse(content);
+		}
 	}
 
+	//Compatibility with VS Selever dialogues
+	public static function parseTxtDialog(content:String):DialogueFile {
+		var diag:DialogueFile = { dialogue: new Array<DialogueLine>() };
+		var lines:Array<String> = content.split('\n');
+		for (line in lines) {
+			var splitName:Array<String> = line.split("|"); //<L,R>|<char:state>|<msg>
+			if (splitName.length < 2) continue;
+			var dline:DialogueLine = { 
+				speed: 0.05, boxState: 'normal', portrait: '',
+				expression: 'default', text: ''
+			};
+			//curAlignment = splitName[0];
+			var split:Array<String> = splitName[1].split(':');
+			dline.portrait = split[0];
+			if (split.length > 1)
+				dline.expression = split[1];
+			dline.text = splitName[2].trim();
+			diag.dialogue.push(dline);
+		}
+		return diag;
+	}
+	//
 	public static function updateBoxOffsets(box:FlxSprite) { //Had to make it static because of the editors
 		box.centerOffsets();
 		box.updateHitbox();
