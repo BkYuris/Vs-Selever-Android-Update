@@ -29,13 +29,17 @@ using StringTools;
 
 class OptionsState extends MusicBeatState
 {
-	var options:Array<String> = ['Note Colors', 'Controls', 'Mobile Controls', 'Adjust Delay and Combo', 'Graphics', 'Visuals and UI', 'Gameplay'];
+	var options:Array<String> = ['Dialogue Language', 'Note Colors', 'Controls', 'Adjust Delay and Combo', 'Graphics', 'Visuals and UI', 'Gameplay'];
 	private var grpOptions:FlxTypedGroup<Alphabet>;
 	private static var curSelected:Int = 0;
 	public static var menuBG:FlxSprite;
 
 	function openSelectedSubstate(label:String) {
 		switch(label) {
+			case 'Dialogue Language': //Language stuff
+				LanguageSupport.languageSwitch();
+				initOptions();
+				changeSelection();
 			case 'Note Colors':
 				openSubState(new options.NotesSubState());
 			case 'Controls':
@@ -48,8 +52,6 @@ class OptionsState extends MusicBeatState
 				openSubState(new options.GameplaySettingsSubState());
 			case 'Adjust Delay and Combo':
 				LoadingState.loadAndSwitchState(new options.NoteOffsetState());
-			case 'Mobile Controls':
-				MusicBeatState.switchState(new options.CustomControlsState());				
 		}
 	}
 
@@ -69,16 +71,7 @@ class OptionsState extends MusicBeatState
 		bg.antialiasing = ClientPrefs.globalAntialiasing;
 		add(bg);
 
-		grpOptions = new FlxTypedGroup<Alphabet>();
-		add(grpOptions);
-
-		for (i in 0...options.length)
-		{
-			var optionText:Alphabet = new Alphabet(0, 0, options[i], true, false);
-			optionText.screenCenter();
-			optionText.y += (100 * (i - (options.length / 2))) + 50;
-			grpOptions.add(optionText);
-		}
+		initOptions(); //Language stuff
 
 		selectorLeft = new Alphabet(0, 0, '>', true, false);
 		add(selectorLeft);
@@ -86,13 +79,33 @@ class OptionsState extends MusicBeatState
 		add(selectorRight);
 
 		changeSelection();
-
-		#if mobileC
-                addVirtualPad(UP_DOWN, A_B);
-                #end
+		ClientPrefs.saveSettings();
 
 		super.create();
 	}
+
+	//Language stuff
+	function initOptions() {
+		if (grpOptions != null) {
+			remove(grpOptions);
+		}
+
+		grpOptions = new FlxTypedGroup<Alphabet>();
+		add(grpOptions);
+
+		for (i in 0...options.length)
+		{
+			var text = options[i];
+			if (options[i] == 'Dialogue Language') {
+				text =  'Lang > ${LanguageSupport.currentLangName()}';
+			}
+			var optionText:Alphabet = new Alphabet(0, 0, text, true, false);
+			optionText.screenCenter();
+			optionText.y += (100 * (i - (options.length / 2))) + 50;
+			grpOptions.add(optionText);
+		}
+	}
+	//
 
 	override function closeSubState() {
 		super.closeSubState();
